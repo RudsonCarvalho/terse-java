@@ -1,0 +1,30 @@
+plugins {
+    id 'java-library'
+}
+
+group   = 'io.terse'
+version = '0.1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes('Implementation-Title': 'terse-java',
+                   'Implementation-Version': version)
+    }
+}

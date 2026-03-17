@@ -1,0 +1,22 @@
+# Build output
+target/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# Gradle
+.gradle/
+gradle-app.setting
+
+# Maven wrapper (not needed — Maven is declared as a dependency in CI)
+!/.mvn/wrapper/maven-wrapper.jar
+
+# OS
+.DS_Store
+Thumbs.db
