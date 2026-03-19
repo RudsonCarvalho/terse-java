@@ -149,28 +149,59 @@ final class TerseSerializer {
         String inline = tryInlineList(list, depth);
         if (inline != null && inline.length() <= LINE_LIMIT) return inline;
 
-        // Block form
+        // Block form — each element must be single line (inline-forced)
         StringBuilder sb = new StringBuilder("[\n");
         for (Object item : list) {
-            String v = serialize(item, depth + 1);
-            appendIndentedLines(sb, v, "  ");
+            String v = serializeForced(item);
+            sb.append(v).append('\n');
         }
         sb.append(']');
         return sb.toString();
     }
 
+    private static String serializeForced(Object value) {
+        if (value == null)         return "~";
+        if (value instanceof Boolean) return (Boolean) value ? "T" : "F";
+        if (value instanceof Long || value instanceof Integer
+                || value instanceof Short || value instanceof Byte)
+            return value.toString();
+        if (value instanceof Number) return serializeDouble(((Number) value).doubleValue());
+        if (value instanceof String) return serializeString((String) value);
+        if (value instanceof Map) {
+            Map<?, ?> m = (Map<?, ?>) value;
+            if (m.isEmpty()) return "{}";
+            StringBuilder sb = new StringBuilder("{");
+            for (Map.Entry<?, ?> e : m.entrySet()) {
+                sb.append(serializeKey(e.getKey().toString()))
+                  .append(':')
+                  .append(serializeForced(e.getValue()))
+                  .append(' ');
+            }
+            sb.append('}');
+            return sb.toString();
+        }
+        if (value instanceof List) {
+            List<?> l = (List<?>) value;
+            if (l.isEmpty()) return "[]";
+            StringBuilder sb = new StringBuilder("[");
+            for (Object item : l) {
+                sb.append(serializeForced(item)).append(' ');
+            }
+            sb.append(']');
+            return sb.toString();
+        }
+        return "~";
+    }
+
     private static String serializeSchemaArray(List<?> list, List<String> keys, int depth) {
         StringBuilder sb = new StringBuilder("#[");
-        sb.append(String.join(" ", keys));
+        sb.append(String.join(" ", keys)).append(' ');
         sb.append(']');
         for (Object item : list) {
             Map<?, ?> row = (Map<?, ?>) item;
             sb.append("\n  ");
-            boolean first = true;
             for (String k : keys) {
-                if (!first) sb.append(' ');
-                sb.append(serialize(row.get(k), depth + 1));
-                first = false;
+                sb.append(serialize(row.get(k), depth + 1)).append(' ');
             }
         }
         return sb.toString();
@@ -223,8 +254,7 @@ final class TerseSerializer {
         for (int i = 0; i < list.size(); i++) {
             String v = tryInlineValue(list.get(i), depth + 1);
             if (v == null) return null;
-            if (i > 0) sb.append(' ');
-            sb.append(v);
+            sb.append(v).append(' ');
         }
         sb.append(']');
         return sb.toString();
@@ -233,14 +263,11 @@ final class TerseSerializer {
     private static String tryInlineMap(Map<?, ?> map, int depth) {
         if (depth > MAX_DEPTH) return null;
         StringBuilder sb = new StringBuilder("{");
-        boolean first = true;
         for (Map.Entry<?, ?> e : map.entrySet()) {
             String k = serializeKey(e.getKey().toString());
             String v = tryInlineValue(e.getValue(), depth + 1);
             if (v == null) return null;
-            if (!first) sb.append(' ');
-            sb.append(k).append(':').append(v);
-            first = false;
+            sb.append(k).append(':').append(v).append(' ');
         }
         sb.append('}');
         return sb.toString();
@@ -269,7 +296,7 @@ final class TerseSerializer {
     private static void appendKeyValue(StringBuilder sb, String key, String value, int baseIndent) {
         String indent = "  ".repeat(baseIndent);
         if (!value.contains("\n")) {
-            sb.append(indent).append(key).append(": ").append(value).append('\n');
+            sb.append(indent).append(key).append(':').append(value).append('\n');
         } else {
             sb.append(indent).append(key).append(":\n");
             appendIndentedLines(sb, value, indent + "  ");

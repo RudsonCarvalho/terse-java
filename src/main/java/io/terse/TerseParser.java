@@ -276,6 +276,8 @@ final class TerseParser {
 
         // Each data row must be indented by ≥2 spaces
         while (pos < src.length()) {
+            int lineStart = pos; // save before consuming newline+indent
+
             // Skip blank lines, then count indent of next non-blank line
             int scan = pos;
             while (scan < src.length() && src.charAt(scan) == '\n') scan++;
@@ -284,6 +286,22 @@ final class TerseParser {
             if (spaces < 2) break; // end of schema array (next doc key or EOF)
 
             pos = scan + spaces; // advance past indent
+
+            // Skip blank or comment lines
+            if (pos < src.length() && src.charAt(pos) == '\n') {
+                continue;
+            }
+            if (isCommentStart()) {
+                skipToEol();
+                if (pos < src.length() && src.charAt(pos) == '\n') pos++;
+                continue;
+            }
+
+            // Stop if this line is a KV pair (key followed by ':') — not a data row
+            if (isKvStart()) {
+                pos = lineStart; // restore to position before this line
+                break;
+            }
 
             Map<String, Object> row = new LinkedHashMap<>();
             for (int i = 0; i < fields.size(); i++) {
@@ -296,6 +314,35 @@ final class TerseParser {
             if (pos < src.length() && src.charAt(pos) == '\n') pos++;
         }
         return result;
+    }
+
+    /** Returns true if current position starts a key:value pair (does not advance pos). */
+    private boolean isKvStart() {
+        int saved = pos;
+        try {
+            if (pos >= src.length()) return false;
+            char c = src.charAt(pos);
+            if (c == '"') {
+                // skip quoted string
+                pos++; // skip opening "
+                while (pos < src.length()) {
+                    char ch = src.charAt(pos++);
+                    if (ch == '"') break;
+                    if (ch == '\\') pos++; // skip escape
+                }
+            } else if (isSafeStart(c)) {
+                pos++;
+                while (pos < src.length() && isSafeChar(src.charAt(pos))) pos++;
+            } else {
+                return false;
+            }
+            skipSpaces();
+            return pos < src.length() && src.charAt(pos) == ':';
+        } catch (Exception e) {
+            return false;
+        } finally {
+            pos = saved;
+        }
     }
 
     // ── Quoted string ────────────────────────────────────────────────────────
