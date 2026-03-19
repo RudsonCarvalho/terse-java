@@ -44,7 +44,7 @@ final class TerseSerializer {
     // ── Core dispatcher ──────────────────────────────────────────────────────
 
     static String serialize(Object value, int depth) {
-        if (depth > MAX_DEPTH) {
+        if (depth >= MAX_DEPTH) {
             throw new TerseException("Maximum nesting depth exceeded", -1, "MAX_DEPTH_EXCEEDED");
         }
         if (value == null)                          return "~";
@@ -152,14 +152,17 @@ final class TerseSerializer {
         // Block form — each element must be single line (inline-forced)
         StringBuilder sb = new StringBuilder("[\n");
         for (Object item : list) {
-            String v = serializeForced(item);
+            String v = serializeForced(item, depth + 1);
             sb.append(v).append('\n');
         }
         sb.append(']');
         return sb.toString();
     }
 
-    private static String serializeForced(Object value) {
+    private static String serializeForced(Object value, int depth) {
+        if (depth >= MAX_DEPTH) {
+            throw new TerseException("Maximum nesting depth exceeded", -1, "MAX_DEPTH_EXCEEDED");
+        }
         if (value == null)         return "~";
         if (value instanceof Boolean) return (Boolean) value ? "T" : "F";
         if (value instanceof Long || value instanceof Integer
@@ -176,7 +179,7 @@ final class TerseSerializer {
                 if (!firstM) sb.append(' ');
                 sb.append(serializeKey(e.getKey().toString()))
                   .append(':')
-                  .append(serializeForced(e.getValue()));
+                  .append(serializeForced(e.getValue(), depth + 1));
                 firstM = false;
             }
             sb.append('}');
@@ -189,7 +192,7 @@ final class TerseSerializer {
             boolean firstL = true;
             for (Object item : l) {
                 if (!firstL) sb.append(' ');
-                sb.append(serializeForced(item));
+                sb.append(serializeForced(item, depth + 1));
                 firstL = false;
             }
             sb.append(']');
