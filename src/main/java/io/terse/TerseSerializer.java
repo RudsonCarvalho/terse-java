@@ -171,11 +171,13 @@ final class TerseSerializer {
             Map<?, ?> m = (Map<?, ?>) value;
             if (m.isEmpty()) return "{}";
             StringBuilder sb = new StringBuilder("{");
+            boolean firstM = true;
             for (Map.Entry<?, ?> e : m.entrySet()) {
+                if (!firstM) sb.append(' ');
                 sb.append(serializeKey(e.getKey().toString()))
                   .append(':')
-                  .append(serializeForced(e.getValue()))
-                  .append(' ');
+                  .append(serializeForced(e.getValue()));
+                firstM = false;
             }
             sb.append('}');
             return sb.toString();
@@ -184,8 +186,11 @@ final class TerseSerializer {
             List<?> l = (List<?>) value;
             if (l.isEmpty()) return "[]";
             StringBuilder sb = new StringBuilder("[");
+            boolean firstL = true;
             for (Object item : l) {
-                sb.append(serializeForced(item)).append(' ');
+                if (!firstL) sb.append(' ');
+                sb.append(serializeForced(item));
+                firstL = false;
             }
             sb.append(']');
             return sb.toString();
@@ -195,13 +200,16 @@ final class TerseSerializer {
 
     private static String serializeSchemaArray(List<?> list, List<String> keys, int depth) {
         StringBuilder sb = new StringBuilder("#[");
-        sb.append(String.join(" ", keys)).append(' ');
+        sb.append(String.join(" ", keys));
         sb.append(']');
         for (Object item : list) {
             Map<?, ?> row = (Map<?, ?>) item;
             sb.append("\n  ");
+            boolean first = true;
             for (String k : keys) {
-                sb.append(serialize(row.get(k), depth + 1)).append(' ');
+                if (!first) sb.append(' ');
+                sb.append(serialize(row.get(k), depth + 1));
+                first = false;
             }
         }
         return sb.toString();
@@ -251,10 +259,13 @@ final class TerseSerializer {
     private static String tryInlineList(List<?> list, int depth) {
         if (depth > MAX_DEPTH) return null;
         StringBuilder sb = new StringBuilder("[");
+        boolean first = true;
         for (int i = 0; i < list.size(); i++) {
             String v = tryInlineValue(list.get(i), depth + 1);
             if (v == null) return null;
-            sb.append(v).append(' ');
+            if (!first) sb.append(' ');
+            sb.append(v);
+            first = false;
         }
         sb.append(']');
         return sb.toString();
@@ -263,11 +274,14 @@ final class TerseSerializer {
     private static String tryInlineMap(Map<?, ?> map, int depth) {
         if (depth > MAX_DEPTH) return null;
         StringBuilder sb = new StringBuilder("{");
+        boolean first = true;
         for (Map.Entry<?, ?> e : map.entrySet()) {
             String k = serializeKey(e.getKey().toString());
             String v = tryInlineValue(e.getValue(), depth + 1);
             if (v == null) return null;
-            sb.append(k).append(':').append(v).append(' ');
+            if (!first) sb.append(' ');
+            sb.append(k).append(':').append(v);
+            first = false;
         }
         sb.append('}');
         return sb.toString();

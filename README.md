@@ -13,7 +13,7 @@ Terse.serialize(true);             // "T"
 Terse.serialize(42L);              // "42"
 Terse.serialize("hello");          // "hello"
 Terse.serialize("T");              // "\"T\""   ← reserved, so quoted
-Terse.serialize(Map.of("a", 1L)); // "{a:1 }"
+Terse.serialize(Map.of("a", 1L)); // "{a:1}"
 
 // Parse
 Terse.parse("~");                    // null
@@ -30,9 +30,9 @@ String src = Terse.serializeDocument(doc);
 
 | JSON | TERSE |
 |------|-------|
-| `{"name":"my-app","port":3000,"debug":false}` | `{name:my-app port:3000 debug:F }` |
-| `[true, null, "hello"]` | `[T ~ hello ]` |
-| `[{"id":1,"role":"admin"},{"id":2,"role":"user"}]` | `#[id role ]\n  1 admin \n  2 user ` |
+| `{"name":"my-app","port":3000,"debug":false}` | `{name:my-app port:3000 debug:F}` |
+| `[true, null, "hello"]` | `[T ~ hello]` |
+| `[{"id":1,"role":"admin"},{"id":2,"role":"user"}]` | `#[id role]\n  1 admin\n  2 user` |
 
 TERSE omits unnecessary quotes, braces, commas, and colons — reducing token count by 20–60% for typical payloads.
 
@@ -47,9 +47,9 @@ TERSE omits unnecessary quotes, braces, commas, and colons — reducing token co
 | `Double` / `Float` | `3.14` | `Double` |
 | `String` (safe-id) | `hello` | `String` |
 | `String` (unsafe) | `"hello world"` | `String` |
-| `Map<?,?>` | `{k:v ... }` | `LinkedHashMap<String,Object>` |
-| `List<?>` | `[v1 v2 ... ]` | `ArrayList<Object>` |
-| Uniform list of Maps | `#[f1 f2 ]\n  v1 v2 ` | `ArrayList<LinkedHashMap<String,Object>>` |
+| `Map<?,?>` | `{k:v ...}` | `LinkedHashMap<String,Object>` |
+| `List<?>` | `[v1 v2 ...]` | `ArrayList<Object>` |
+| Uniform list of Maps | `#[f1 f2]\n  v1 v2` | `ArrayList<LinkedHashMap<String,Object>>` |
 
 ## Error handling
 
