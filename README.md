@@ -86,7 +86,7 @@ Zero runtime dependencies — only JDK 11+ required.
 ## Spec
 
 Full specification: [terse-format](https://github.com/RudsonCarvalho/terse-format)
-Current version: **v0.6**
+Current version: **v0.7**
 
 ## License
 
